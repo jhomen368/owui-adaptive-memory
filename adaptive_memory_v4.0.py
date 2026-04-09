@@ -2892,8 +2892,15 @@ Your output must be valid JSON only. No additional text.""",
 
         # 3. Inject into system prompt
         if relevant_memories:
+            # Strip internal metadata annotations ([Tags: ...], [Memory Bank: ...],
+            # [Confidence: ...]) before injection so thinking-capable models (e.g.
+            # Gemini Flash) don't treat schema markers as competing instructions and
+            # enter an infinite reasoning loop.
             context_text = "User Memories:\n" + "\n".join(
-                ["- %s" % m.content for m in relevant_memories]
+                [
+                    "- %s" % self.pipeline._extract_raw_content(m.content)
+                    for m in relevant_memories
+                ]
             )
 
             # Validate system message before injection
